@@ -1,0 +1,20 @@
+{
+    "$schema": "http://schemas.microsoft.org/azure/deploymentTemplate?api-version=2015-01-01-preview#",
+    "contentVersion": "1.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located."
+            },
+            "defaultValue": "[if(contains(deployment().properties, 'templateLink'), deployment().properties.templateLink.uri, 'https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/')]"
+        }
+    },
+    "resources": [],
+    "outputs": {
+        "deploy": {
+            "type": "string",
+            "value": "[if(contains(deployment().properties, 'templateLink'), deployment().properties.templateLink.uri, 'https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/')]"
+        }
+    }
+}
