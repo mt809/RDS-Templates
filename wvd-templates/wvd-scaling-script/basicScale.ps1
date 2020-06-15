@@ -1,7 +1,7 @@
 ﻿
 <#
 .SYNOPSIS
-	v0.1.22
+	v0.1.23
 .DESCRIPTION
 	# //todo add stuff from https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_comment_based_help?view=powershell-5.1
 #>
@@ -192,7 +192,7 @@ try {
 		}
 	}
 
-	function Update-SessionHostToAllowNewSession {
+	function TryUpdateSessionHostToAllowNewSession {
 		[CmdletBinding(SupportsShouldProcess)]
 		param (
 			[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -203,7 +203,12 @@ try {
 			if (!$SessionHost.AllowNewSession) {
 				Write-Log "Update session host '$($SessionHost.SessionHostName)' to allow new sessions"
 				if ($PSCmdlet.ShouldProcess($SessionHost.SessionHostName, 'Update session host to allow new sessions')) {
-					Set-RdsSessionHost -TenantName $SessionHost.TenantName -HostPoolName $SessionHost.HostPoolName -Name $SessionHost.SessionHostName -AllowNewSession $true | Write-Verbose
+					try {
+						Set-RdsSessionHost -TenantName $SessionHost.TenantName -HostPoolName $SessionHost.HostPoolName -Name $SessionHost.SessionHostName -AllowNewSession $true | Write-Verbose
+					}
+					catch {
+						Write-Log -Warn "Some error occurred while updating the session host '$($SessionHost.SessionHostName)' to allow new sessions: $($PSItem | Format-List -Force | Out-String)"
+					}
 				}
 			}
 		}
@@ -530,7 +535,7 @@ try {
 			$SessionHostName = $VM.SessionHost.SessionHostName
 
 			# Make sure session host is allowing new user sessions
-			Update-SessionHostToAllowNewSession -SessionHost $VM.SessionHost
+			TryUpdateSessionHostToAllowNewSession -SessionHost $VM.SessionHost
 
 			Write-Log "Start session host '$SessionHostName' as a background job"
 			if ($PSCmdlet.ShouldProcess($SessionHostName, 'Start session host as a background job')) {
@@ -633,12 +638,12 @@ try {
 					$VM.SessionHost = $SessionHost = Set-RdsSessionHost -TenantName $TenantName -HostPoolName $HostPoolName -Name $SessionHostName -AllowNewSession $false
 				}
 				catch {
-					throw [System.Exception]::new("Failed to set it to disallow new sessions on session host: '$SessionHostName'", $PSItem.Exception)
+					Write-Log -Warn "Some error occurred while updating the session host '$SessionHostName' to disallow new sessions: $($PSItem | Format-List -Force | Out-String)"
 				}
 
 				if ($SessionHost.Sessions -and !$LimitSecondsToForceLogOffUser) {
 					Write-Log -Warn "Session host '$SessionHostName' has $($SessionHost.Sessions) sessions but limit seconds to force log off user is set to 0, so will not stop any more session hosts (https://aka.ms/wvdscale#how-the-scaling-tool-works)"
-					Update-SessionHostToAllowNewSession -SessionHost $SessionHost
+					TryUpdateSessionHostToAllowNewSession -SessionHost $SessionHost
 					continue
 				}
 			}
@@ -651,7 +656,7 @@ try {
 				$VM.UserSessions = @(Get-RdsUserSession -TenantName $TenantName -HostPoolName $HostPoolName | Where-Object { $_.SessionHostName -eq $SessionHostName })
 			}
 			catch {
-				throw [System.Exception]::new("Failed to retrieve user sessions of session host: '$SessionHostName'", $PSItem.Exception)
+				Write-Log -Warn "Failed to retrieve user sessions of session host '$SessionHostName': $($PSItem | Format-List -Force | Out-String)"
 			}
 
 			Write-Log "Send log off message to active user sessions on session host: '$SessionHostName'"
@@ -666,7 +671,7 @@ try {
 					}
 				}
 				catch {
-					throw [System.Exception]::new("Failed to send a log off message to user: '$($Session.AdUserName)', session ID: $($Session.SessionId)", $PSItem.Exception)
+					Write-Log -Warn "Failed to send a log off message to user: '$($Session.AdUserName)', session ID: $($Session.SessionId) $($PSItem | Format-List -Force | Out-String)"
 				}
 			}
 			$VMsToStopAfterLogOffTimeOut += $VM
@@ -704,7 +709,7 @@ try {
 					}
 				}
 				catch {
-					throw [System.Exception]::new("Failed to force log off user: '$($Session.AdUserName)', session ID: $($Session.SessionId)", $PSItem.Exception)
+					Write-Log -Warn "Failed to force log off user: '$($Session.AdUserName)', session ID: $($Session.SessionId) $($PSItem | Format-List -Force | Out-String)"
 				}
 			}
 			
@@ -745,7 +750,7 @@ try {
 	}
 
 	# Make sure session hosts are allowing new user sessions & update them to allow if not
-	$SessionHostsToCheck | Update-SessionHostToAllowNewSession
+	$SessionHostsToCheck | TryUpdateSessionHostToAllowNewSession
 
 	#endregion
 }
