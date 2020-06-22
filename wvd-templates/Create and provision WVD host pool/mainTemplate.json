@@ -483,6 +483,11 @@
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('rdshPrefix'), copyindex())]",
             "location": "[parameters('location')]",
+            "plan": {
+                "name": "desktop-byol-108",
+                "product": "arcgis-desktop",
+                "publisher": "esri"
+            },
             "copy": {
                 "name": "rdsh-vm-loop",
                 "count": "[parameters('rdshNumberOfInstances')]"
