@@ -460,6 +460,10 @@
 								{
 									"label": "Windows Server 2016 Datacenter",
 									"value": "2016-Datacenter"
+								},
+								{
+									"label": "ArcGIS Desktop 10.8",
+									"value": "ArcGIS-Desktop-10.8"
 								}
 							]
 						},
