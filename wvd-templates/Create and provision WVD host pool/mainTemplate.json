@@ -58,7 +58,7 @@
                 "Windows-10-Enterprise-1909",
                 "Windows-10-Enterprise-1903",
                 "2016-Datacenter",
-                "ArcGIS-Desktop-108"
+                "ArcGIS-Desktop-1071"
             ],
             "defaultValue": "Windows-10-Enterprise-multi-session-with-Office-365-ProPlus"
         },
@@ -363,11 +363,11 @@
                 "sku": "2016-Datacenter",
                 "version": "latest"
             },
-            "ArcGIS-Desktop-108": {
+            "ArcGIS-Desktop-1071": {
                 "publisher": "esri",
                 "offer": "arcgis-desktop",
-                "sku": "desktop-byol-108",
-                "version": "10.8.12790"
+                "sku": "desktop-byol-1071",
+                "version": "10.7.11595"
             }
         },
         "imageName": "[concat(variables('rdshPrefix'), 'image')]",
